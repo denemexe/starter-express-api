@@ -8,6 +8,9 @@ const port = 3000;
 // Body-parser middleware'i uygulamaya ekle
 app.use(bodyParser.urlencoded({ extended: true }));
 
+// Yetkili anahtarlar için bir veri deposu
+let authorizedKeys = ["yetkilikey1", "yetkilikey2", "yetkilikey3"];
+
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
 
@@ -24,26 +27,42 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `${anahtar}, `;
+        keyListHTML += `${kullaniciAdi}: ${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form>, `;
     }
     keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
     keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 
-// Anahtar yönetimi sayfası
-app.get('/keymanagment', (req, res) => {
-    let keyManagmentHTML = `
-        <h1>Anahtar Yönetimi</h1>
-        <form action="/key-olustur" method="post">
-            <label for="kullaniciAdi">Kullanıcı Adı:</label>
-            <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
-            <button type="submit">Anahtar Oluştur</button>
+// Yetkili anahtarları listeleme endpoint'i
+app.get('/login', (req, res) => {
+    let loginHTML = `
+        <h1>Yetkili Anahtar Girişi</h1>
+        <form action="/logincheck" method="post">
+            <label for="yetkiliAnahtar">Yetkili Anahtar:</label>
+            <input type="text" id="yetkiliAnahtar" name="yetkiliAnahtar" required>
+            <button type="submit">Giriş Yap</button>
         </form>
-        <br>
-        <a href="/key-list">Anahtarları Listele</a>
     `;
-    res.send(keyManagmentHTML);
+    res.send(loginHTML);
+});
+
+// Yetkili anahtar kontrol endpoint'i
+app.post('/logincheck', (req, res) => {
+    const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
+    if (authorizedKeys.includes(yetkiliAnahtar)) {
+        res.send('<h1>Giriş Başarılı</h1>');
+    } else {
+        res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
+    }
+});
+
+// Yeni kullanıcı için anahtar oluşturma endpoint'i
+app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
+    const kullaniciAdi = req.params.kullaniciAdi;
+    const key = generateRandomKey(); // Rastgele anahtar oluştur
+    keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
+    res.send(key);
 });
 
 // Anahtar silme endpoint'i
@@ -64,6 +83,16 @@ function generateKey(kullaniciAdi) {
     const uniqueString = Date.now().toString(); // Farklılık sağlamak için benzersiz bir değer kullanın
     hmac.update(kullaniciAdi + '-' + uniqueString); // "-" işaretiyle ayrılmış şekilde kullanıcı adını ve benzersiz değeri birleştirin
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
+    return key;
+}
+
+// Rastgele anahtar oluşturma fonksiyonu
+function generateRandomKey() {
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let key = '';
+    for (let i = 0; i < 7; i++) {
+        key += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
     return key;
 }
 

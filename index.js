@@ -1,15 +1,19 @@
 const express = require('express');
+const bodyParser = require('body-parser');
 const crypto = require('crypto');
 
 const app = express();
 const port = 3000;
+
+// Body-parser middleware'i uygulamaya ekle
+app.use(bodyParser.urlencoded({ extended: true }));
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
-    const kullaniciAdi = req.body.kullaniciAdi;
+    const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
     res.send(key);

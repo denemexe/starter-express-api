@@ -1,48 +1,31 @@
 const express = require('express');
-const bodyParser = require('body-parser');
+const crypto = require('crypto');
 
 const app = express();
-app.use(bodyParser.json());
-
-// Örnek anahtar depolama
-let keys = [];
+const port = 3000;
 
 // Anahtar oluşturma endpoint'i
-app.post('/create-key', (req, res) => {
-  const key = generateKey();
-  keys.push(key);
-  res.status(201).json({ key });
+app.get('/key-olustur/:kullaniciAdi', (req, res) => {
+    const kullaniciAdi = req.params.kullaniciAdi;
+    const key = generateKey(kullaniciAdi);
+    res.send(key);
 });
 
-// Anahtar silme endpoint'i
-app.delete('/delete-key/:key', (req, res) => {
-  const { key } = req.params;
-  const index = keys.indexOf(key);
-  if (index !== -1) {
-    keys.splice(index, 1);
-    res.status(200).json({ message: 'Anahtar başarıyla silindi.' });
-  } else {
-    res.status(404).json({ message: 'Belirtilen anahtar bulunamadı.' });
-  }
+// Anahtar silme endpoint'i (istediğinizde kullanabilirsiniz)
+app.delete('/key-sil/:anahtar', (req, res) => {
+    // Anahtarı silme işlemini burada gerçekleştirin
+    res.send('Anahtar başarıyla silindi.');
 });
 
-// Rasgele anahtar oluşturma fonksiyonu
-function generateKey() {
-  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-  const keyLength = 10;
-  let key = '';
-  for (let i = 0; i < keyLength; i++) {
-    key += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return key;
+// Anahtar oluşturma fonksiyonu
+function generateKey(kullaniciAdi) {
+    const secret = 'bu-gizli-bir-anahtar'; // Daha güvenli bir anahtar belirleyebilirsiniz
+    const hmac = crypto.createHmac('sha256', secret);
+    hmac.update(kullaniciAdi);
+    const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
+    return key;
 }
 
-// Ana sayfa rotası
-app.get('/', (req, res) => {
-  res.send('Ana sayfaya hoş geldiniz!');
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server ${PORT} portunda başlatıldı...`);
+app.listen(port, () => {
+    console.log(`Uygulama ${port} portunda çalışıyor.`);
 });

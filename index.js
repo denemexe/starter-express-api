@@ -52,6 +52,11 @@ app.post('/logincheck', (req, res) => {
     const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
     if (authorizedKeys.includes(yetkiliAnahtar)) {
         res.send('<h1>Giriş Başarılı</h1>');
+        // Yetkili anahtar doğru olduğunda anahtarları listeleme
+        for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
+            res.write(`${kullaniciAdi}: ${anahtar}<br>`);
+        }
+        res.end();
     } else {
         res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
     }
@@ -62,7 +67,7 @@ app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateRandomKey(); // Rastgele anahtar oluştur
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    res.redirect('/login');
+    res.redirect('/logincheck');
 });
 
 // Anahtar silme endpoint'i

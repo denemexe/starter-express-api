@@ -1,8 +1,14 @@
 const express = require('express');
 const crypto = require('crypto');
+const methodOverride = require('method-override');
 
 const app = express();
 const port = 3000;
+
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(methodOverride('_method'));
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};

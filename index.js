@@ -24,7 +24,7 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `${kullaniciAdi}: ${anahtar}, `;
+        keyListHTML += `${anahtar}, `;
     }
     keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
     keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
@@ -62,7 +62,7 @@ function generateKey(kullaniciAdi) {
     const secret = 'bu-gizli-bir-anahtar'; // Daha güvenli bir anahtar belirleyebilirsiniz
     const hmac = crypto.createHmac('sha256', secret);
     const uniqueString = Date.now().toString(); // Farklılık sağlamak için benzersiz bir değer kullanın
-    hmac.update(kullaniciAdi + uniqueString);
+    hmac.update(kullaniciAdi + '-' + uniqueString); // "-" işaretiyle ayrılmış şekilde kullanıcı adını ve benzersiz değeri birleştirin
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
     return key;
 }

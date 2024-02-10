@@ -1,14 +1,8 @@
 const express = require('express');
 const crypto = require('crypto');
-const methodOverride = require('method-override');
 
 const app = express();
 const port = 3000;
-
-// Middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-app.use(methodOverride('_method'));
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
@@ -23,11 +17,16 @@ app.get('/key-olustur/:kullaniciAdi', (req, res) => {
 
 // Anahtar listeleme endpoint'i
 app.get('/key-list', (req, res) => {
-    res.send(keyStore);
+    // Anahtar listesini HTML formatında oluşturalım
+    let keyListHTML = '<h1>Anahtar Listesi</h1>';
+    for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
+        keyListHTML += `<p>${kullaniciAdi}: ${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
+    }
+    res.send(keyListHTML);
 });
 
 // Anahtar silme endpoint'i
-app.delete('/key-sil/:kullaniciAdi', (req, res) => {
+app.post('/key-sil/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     if (keyStore.hasOwnProperty(kullaniciAdi)) {
         delete keyStore[kullaniciAdi];

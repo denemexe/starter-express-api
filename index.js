@@ -24,9 +24,10 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `<p>${kullaniciAdi}: ${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
+        keyListHTML += `${kullaniciAdi}: ${anahtar}, `;
     }
-    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
+    keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 

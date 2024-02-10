@@ -8,8 +8,8 @@ const port = 3000;
 let keyStore = {};
 
 // Anahtar oluşturma endpoint'i
-app.get('/key-olustur/:kullaniciAdi', (req, res) => {
-    const kullaniciAdi = req.params.kullaniciAdi;
+app.post('/key-olustur', (req, res) => {
+    const kullaniciAdi = req.body.kullaniciAdi;
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
     res.send(key);
@@ -27,16 +27,16 @@ app.get('/key-list', (req, res) => {
 });
 
 // Anahtar yönetimi sayfası
-<!-- Anahtar yönetimi sayfası -->
-<h1>Anahtar Yönetimi</h1>
-<form action="/key-olustur" method="post">
-    <label for="kullaniciAdi">Kullanıcı Adı:</label>
-    <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
-    <button type="submit">Anahtar Oluştur</button>
-</form>
-<br>
-<a href="/key-list">Anahtarları Listele</a>
-
+app.get('/keymanagment', (req, res) => {
+    let keyManagmentHTML = `
+        <h1>Anahtar Yönetimi</h1>
+        <form action="/key-olustur" method="post">
+            <label for="kullaniciAdi">Kullanıcı Adı:</label>
+            <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
+            <button type="submit">Anahtar Oluştur</button>
+        </form>
+        <br>
+        <a href="/key-list">Anahtarları Listele</a>
     `;
     res.send(keyManagmentHTML);
 });
@@ -56,7 +56,8 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
 function generateKey(kullaniciAdi) {
     const secret = 'bu-gizli-bir-anahtar'; // Daha güvenli bir anahtar belirleyebilirsiniz
     const hmac = crypto.createHmac('sha256', secret);
-    hmac.update(kullaniciAdi);
+    const uniqueString = Date.now().toString(); // Farklılık sağlamak için benzersiz bir değer kullanın
+    hmac.update(kullaniciAdi + uniqueString);
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
     return key;
 }

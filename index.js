@@ -61,9 +61,9 @@ app.post('/logincheck', (req, res) => {
 app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateRandomKey(); // Rastgele anahtar oluştur
-    authorizedKeys.push(`${kullaniciAdi}-${key}`); // Yetkili anahtarlar listesine ekleyelim
-    keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    res.send(`${kullaniciAdi}-${key}`);
+    const newKey = `${kullaniciAdi}-${key}`; // Kullanıcı adı ile anahtarı birleştir
+    authorizedKeys.push(newKey); // Yetkili anahtarlar listesine ekleyelim
+    res.send(newKey); // Oluşturulan anahtarı gönderelim
 });
 
 // Anahtar silme endpoint'i

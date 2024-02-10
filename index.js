@@ -9,7 +9,7 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Yetkili anahtarlar için bir veri deposu
-let authorizedKeys = ["yetkilikey1", "yetkilikey2", "yetkilikey3"];
+let authorizedKeys = [];
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
@@ -52,11 +52,6 @@ app.post('/logincheck', (req, res) => {
     const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
     if (authorizedKeys.includes(yetkiliAnahtar)) {
         res.send('<h1>Giriş Başarılı</h1>');
-        // Yetkili anahtar doğru olduğunda anahtarları listeleme
-        for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-            res.write(`${kullaniciAdi}: ${anahtar}<br>`);
-        }
-        res.end();
     } else {
         res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
     }
@@ -66,8 +61,9 @@ app.post('/logincheck', (req, res) => {
 app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateRandomKey(); // Rastgele anahtar oluştur
+    authorizedKeys.push(`${kullaniciAdi}-${key}`); // Yetkili anahtarlar listesine ekleyelim
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    res.redirect('/logincheck');
+    res.send(`${kullaniciAdi}-${key}`);
 });
 
 // Anahtar silme endpoint'i

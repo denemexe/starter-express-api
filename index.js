@@ -1,8 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const fetch = require('node-fetch');
-const { setTimeout } = require('timers');
 
 const app = express();
 const port = 3000;
@@ -53,36 +51,10 @@ app.get('/login', (req, res) => {
 app.post('/logincheck', (req, res) => {
     const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
     if (authorizedKeys.includes(yetkiliAnahtar)) {
-        // Webhook'a bildirim gönder
-        const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03';
-        const webhookData = {
-            content: `${yetkiliAnahtar} sisteme giriş yaptı.`
-        };
-        fetch(webhookURL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(webhookData)
-        })
-        .then(response => {
-            if (response.ok) {
-                console.log('Webhook gönderildi.');
-            } else {
-                console.error('Webhook gönderilemedi.');
-            }
-        })
-        .catch(error => {
-            console.error('Webhook gönderilirken hata oluştu:', error);
-        });
-
-        // Başarılı giriş bildirimi gönder
-        res.send('<h1>Giriş Başarılı</h1>');
-
-        // 3 saniye sonra /keymanagment sayfasına yönlendir
         setTimeout(() => {
             res.redirect('/keymanagment');
-        }, 3000);
+        }, 3000); // 3 saniye sonra /keymanagment sayfasına yönlendir
+        res.send('<h1>Giriş Başarılı</h1>');
     } else {
         res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
     }
@@ -127,6 +99,11 @@ function generateRandomKey() {
     }
     return key;
 }
+
+// Anahtarları saklama endpoint'i
+app.get('/loginkeys', (req, res) => {
+    res.json(authorizedKeys);
+});
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

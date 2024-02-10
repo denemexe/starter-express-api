@@ -22,7 +22,23 @@ app.get('/key-list', (req, res) => {
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
         keyListHTML += `<p>${kullaniciAdi}: ${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
     }
+    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
+});
+
+// Anahtar yönetimi sayfası
+app.get('/keymanagment', (req, res) => {
+    let keyManagmentHTML = `
+        <h1>Anahtar Yönetimi</h1>
+        <form action="/key-olustur" method="get">
+            <label for="kullaniciAdi">Kullanıcı Adı:</label>
+            <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
+            <button type="submit">Anahtar Oluştur</button>
+        </form>
+        <br>
+        <a href="/key-list">Anahtarları Listele</a>
+    `;
+    res.send(keyManagmentHTML);
 });
 
 // Anahtar silme endpoint'i

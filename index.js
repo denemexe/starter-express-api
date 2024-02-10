@@ -4,7 +4,7 @@ const crypto = require('crypto');
 const app = express();
 const port = 3000;
 
-// Anahtarlar için bir veri deposu
+// Örnek anahtarlar için bir veri deposu
 let keyStore = {};
 
 // Anahtar oluşturma endpoint'i
@@ -23,7 +23,7 @@ app.get('/key-list', (req, res) => {
 // Anahtar silme endpoint'i
 app.delete('/key-sil/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
-    if (keyStore[kullaniciAdi]) {
+    if (keyStore.hasOwnProperty(kullaniciAdi)) {
         delete keyStore[kullaniciAdi];
         res.send('Anahtar başarıyla silindi.');
     } else {

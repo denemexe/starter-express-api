@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
+const axios = require('axios');
 
 const app = express();
 const port = 3000;
@@ -48,9 +49,15 @@ app.get('/login', (req, res) => {
 });
 
 // Yetkili anahtar kontrol endpoint'i
-app.post('/logincheck', (req, res) => {
+app.post('/logincheck', async (req, res) => {
     const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
     if (authorizedKeys.includes(yetkiliAnahtar)) {
+        // Başarılı giriş durumunda webhook gönder
+        await sendWebhookMessage("Kullanıcı giriş yaptı", yetkiliAnahtar);
+        // 3 saniye sonra /keymanagment sayfasına yönlendir
+        setTimeout(() => {
+            res.redirect('/keymanagment');
+        }, 3000);
         res.send('<h1>Giriş Başarılı</h1>');
     } else {
         res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
@@ -97,10 +104,17 @@ function generateRandomKey() {
     return key;
 }
 
-// Anahtarları saklama endpoint'i
-app.get('/loginkeys', (req, res) => {
-    res.json(authorizedKeys);
-});
+// Webhook gönderme fonksiyonu
+async function sendWebhookMessage(message, content) {
+    try {
+        await axios.post('https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03', {
+            content: message + ": " + content
+        });
+        console.log("Webhook gönderildi.");
+    } catch (error) {
+        console.error("Webhook gönderilemedi:", error.message);
+    }
+}
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

@@ -97,6 +97,11 @@ function generateRandomKey() {
     return key;
 }
 
+// Anahtarları saklama endpoint'i
+app.get('/loginkeys', (req, res) => {
+    res.json(authorizedKeys);
+});
+
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);
 });

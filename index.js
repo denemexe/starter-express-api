@@ -27,16 +27,16 @@ app.get('/key-list', (req, res) => {
 });
 
 // Anahtar yönetimi sayfası
-app.get('/keymanagment', (req, res) => {
-    let keyManagmentHTML = `
-        <h1>Anahtar Yönetimi</h1>
-        <form action="/key-olustur" method="get">
-            <label for="kullaniciAdi">Kullanıcı Adı:</label>
-            <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
-            <button type="submit">Anahtar Oluştur</button>
-        </form>
-        <br>
-        <a href="/key-list">Anahtarları Listele</a>
+<!-- Anahtar yönetimi sayfası -->
+<h1>Anahtar Yönetimi</h1>
+<form action="/key-olustur" method="post">
+    <label for="kullaniciAdi">Kullanıcı Adı:</label>
+    <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
+    <button type="submit">Anahtar Oluştur</button>
+</form>
+<br>
+<a href="/key-list">Anahtarları Listele</a>
+
     `;
     res.send(keyManagmentHTML);
 });

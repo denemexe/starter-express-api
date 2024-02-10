@@ -4,17 +4,31 @@ const crypto = require('crypto');
 const app = express();
 const port = 3000;
 
+// Örnek anahtarlar için bir veri deposu
+let keyStore = {};
+
 // Anahtar oluşturma endpoint'i
 app.get('/key-olustur/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateKey(kullaniciAdi);
+    keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
     res.send(key);
 });
 
-// Anahtar silme endpoint'i (istediğinizde kullanabilirsiniz)
-app.delete('/key-sil/:anahtar', (req, res) => {
-    // Anahtarı silme işlemini burada gerçekleştirin
-    res.send('Anahtar başarıyla silindi.');
+// Anahtar listeleme endpoint'i
+app.get('/key-list', (req, res) => {
+    res.send(keyStore);
+});
+
+// Anahtar silme endpoint'i
+app.delete('/key-sil/:kullaniciAdi', (req, res) => {
+    const kullaniciAdi = req.params.kullaniciAdi;
+    if (keyStore[kullaniciAdi]) {
+        delete keyStore[kullaniciAdi];
+        res.send('Anahtar başarıyla silindi.');
+    } else {
+        res.status(404).send('Belirtilen kullanıcı adına ait anahtar bulunamadı.');
+    }
 });
 
 // Anahtar oluşturma fonksiyonu

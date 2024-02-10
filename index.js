@@ -62,7 +62,7 @@ app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateRandomKey(); // Rastgele anahtar oluştur
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    res.send(key);
+    res.redirect('/login');
 });
 
 // Anahtar silme endpoint'i

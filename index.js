@@ -51,10 +51,7 @@ app.get('/login', (req, res) => {
 app.post('/logincheck', (req, res) => {
     const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
     if (authorizedKeys.includes(yetkiliAnahtar)) {
-        setTimeout(() => {
-            res.redirect('/keymanagment');
-        }, 3000); // 3 saniye sonra /keymanagment sayfasına yönlendir
-        res.send('<h1>Giriş Başarılı</h1>');
+        res.redirect('/keymanagment'); // Başarılı giriş durumunda yönlendirme yap
     } else {
         res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
     }

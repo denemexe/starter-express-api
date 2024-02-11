@@ -20,14 +20,14 @@ app.post('/key-olustur', (req, res) => {
 });
 
 // Anahtar listeleme endpoint'i
+// Anahtar listeleme endpoint'i
 app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `${anahtar}, `;
+        keyListHTML += `<p>${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
     }
-    keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
-    keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 

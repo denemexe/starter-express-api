@@ -10,7 +10,6 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
-let loginKeys = [];
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
@@ -66,56 +65,6 @@ function generateKey(kullaniciAdi) {
     hmac.update(kullaniciAdi + '-' + uniqueString); // "-" işaretiyle ayrılmış şekilde kullanıcı adını ve benzersiz değeri birleştirin
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
     return key;
-}
-
-// Login kısmı
-app.get('/login', (req, res) => {
-    res.send('<h1>Lütfen yetkili anahtarı giriniz:</h1><form action="/newlogincreate" method="post"><label for="loginKey">Yetkili Anahtar:</label><input type="text" id="loginKey" name="loginKey" required><button type="submit">Giriş Yap</button></form>');
-});
-
-// Yeni login oluşturma
-app.post('/newlogincreate/:kullaniciAdi', (req, res) => {
-    const kullaniciAdi = req.params.kullaniciAdi;
-    const key = generateKey(kullaniciAdi);
-    loginKeys.push({ kullaniciAdi, key }); // Yeni login anahtarını kaydet
-    res.redirect('/loginkeys');
-});
-
-// Login anahtarlarını listeleme
-app.get('/loginkeys', (req, res) => {
-    let loginKeysHTML = '<h1>Login Anahtarları</h1>';
-    loginKeys.forEach(loginKey => {
-        loginKeysHTML += `<p>${loginKey.kullaniciAdi}: ${loginKey.key} <form action="/loginkeys/${loginKey.kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
-    });
-    loginKeysHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
-    res.send(loginKeysHTML);
-});
-
-// Login anahtarı silme
-app.post('/loginkeys/:kullaniciAdi', (req, res) => {
-    const kullaniciAdi = req.params.kullaniciAdi;
-    const index = loginKeys.findIndex(loginKey => loginKey.kullaniciAdi === kullaniciAdi);
-    if (index !== -1) {
-        loginKeys.splice(index, 1);
-        res.send('Login anahtarı başarıyla silindi.');
-    } else {
-        res.status(404).send('Belirtilen kullanıcı adına ait login anahtarı bulunamadı.');
-    }
-});
-
-// Kullanıcıyı anahtar yönetimine yönlendir
-app.post('/login', (req, res) => {
-    res.redirect('/keymanagment');
-});
-
-// Rastgele kullanıcı adı oluşturma
-function generateRandomString(length) {
-    let result = '';
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    for (let i = 0; i < length; i++) {
-        result += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return result;
 }
 
 app.listen(port, () => {

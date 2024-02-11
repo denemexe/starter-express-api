@@ -104,20 +104,15 @@ app.post('/login', (req, res) => {
 function sendWebhookMessage(role) {
     const message = `Bir ${role} panele giriş yapıldı.`;
     const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
-    const data = JSON.stringify({ content: message });
 
     const options = {
-        hostname: 'discord.com',
-        port: 443,
-        path: '/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03',
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json',
-            'Content-Length': data.length
+            'Content-Type': 'application/json'
         }
     };
 
-    const req = http.request(options, (res) => {
+    const req = http.request(webhookURL, options, (res) => {
         console.log(`statusCode: ${res.statusCode}`);
         res.on('data', (d) => {
             process.stdout.write(d);
@@ -128,7 +123,7 @@ function sendWebhookMessage(role) {
         console.error(error);
     });
 
-    req.write(data);
+    req.write(JSON.stringify({ content: message }));
     req.end();
 }
 

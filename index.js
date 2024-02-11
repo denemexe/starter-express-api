@@ -25,7 +25,11 @@ function loadKeys() {
         return JSON.parse(data);
     } catch (err) {
         console.error('Anahtarlar yüklenirken hata:', err);
-        return {};
+        return {
+            "staffkey": "staffkey-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690",
+            "adminkey": "adminkey-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29",
+            "ownerkey": "ownerkey-6c50c5dece8c1f4b72b686ed842d79b5cf3d1812d3583eb8605ed84262b5ee1c"
+        };
     }
 }
 

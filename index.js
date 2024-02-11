@@ -10,7 +10,11 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Örnek anahtarlar için bir veri deposu
-let keyStore = {};
+let keyStore = {
+    "staffkey": "staff-key-value",
+    "adminkey": "admin-key-value",
+    "ownerkey": "owner-key-value"
+};
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
@@ -25,10 +29,9 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `${anahtar}, `;
+        keyListHTML += `<p>${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
     }
-    keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
-    keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    keyListHTML += '<br><a href="/keymanagment">Anahtarları Listele</a>';
     res.send(keyListHTML);
 });
 
@@ -68,38 +71,43 @@ function generateKey(kullaniciAdi) {
     return key;
 }
 
-// Login sayfası
-app.get('/login', (req, res) => {
-    res.send(`
-        <h1>Login</h1>
-        <form action="/login-check" method="post">
-            <label for="anahtar">Anahtar:</label>
-            <input type="text" id="anahtar" name="anahtar" required>
-            <button type="submit">Giriş Yap</button>
-        </form>
-    `);
-});
-
-// Anahtar kontrolü endpoint'i
-app.post('/login-check', async (req, res) => {
-    const anahtar = req.body.anahtar;
-
-    // Burada anahtarın geçerli olup olmadığını kontrol edebilirsiniz
-    // Örnek olarak, belirlediğiniz siteden anahtarın geçerliliğini kontrol edebilirsiniz
-    try {
-        const response = await axios.get('https://sparkly-puppy-684355.netlify.app/keys.html');
-        const keysHTML = response.data;
-        
-        // Anahtarın HTML içinde geçip geçmediğini kontrol et
-        if (keysHTML.includes(anahtar)) {
-            res.send('Anahtar geçerli, giriş yapıldı.');
-        } else {
-            res.send('Anahtar geçersiz, giriş başarısız.');
-        }
-    } catch (error) {
-        res.status(500).send('Anahtar kontrolünde bir hata oluştu.');
+// Login endpoint'i
+app.post('/login', (req, res) => {
+    const key = req.body.key; // Anahtarı al
+    if (keyStore.hasOwnProperty(key)) {
+        const userType = getKeyType(key);
+        // Discord Webhook'a mesaj gönderme
+        sendDiscordMessage(userType);
+        res.redirect('/keymanagment'); // Anahtar doğruysa /keymanagment sayfasına yönlendir
+    } else {
+        res.send('Geçersiz anahtar'); // Anahtar geçersizse hata mesajı göster
     }
 });
+
+// Anahtar türünü belirleme fonksiyonu
+function getKeyType(key) {
+    if (key === keyStore.staffkey) {
+        return 'Staff';
+    } else if (key === keyStore.adminkey) {
+        return 'Admin';
+    } else if (key === keyStore.ownerkey) {
+        return 'Owner';
+    }
+    return 'Unknown';
+}
+
+// Discord Webhook'a mesaj gönderme fonksiyonu
+function sendDiscordMessage(userType) {
+    const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03';
+    const message = `${userType} sisteme giriş yaptı.`;
+    axios.post(webhookURL, { content: message })
+        .then(response => {
+            console.log('Discord mesajı gönderildi:', response.data);
+        })
+        .catch(error => {
+            console.error('Discord mesajı gönderirken hata oluştu:', error);
+        });
+}
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

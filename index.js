@@ -21,7 +21,10 @@ app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    sendWebhookMessage(`Yeni bir ${kullaniciAdi} oluşturuldu. Oluşturulan key: ${key}`);
+    
+    // Webhook mesajını gönder
+    sendWebhookMessage(kullaniciAdi, key);
+
     res.send(key);
 });
 
@@ -58,7 +61,6 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
         delete keyStore[kullaniciAdi];
-        sendWebhookMessage(`${kullaniciAdi} anahtarı silindi.`);
         res.send('Anahtar başarıyla silindi.');
     } else {
         res.status(404).send('Belirtilen kullanıcı adına ait anahtar bulunamadı.');
@@ -72,13 +74,13 @@ function generateKey(kullaniciAdi) {
     const uniqueString = Date.now().toString(); // Farklılık sağlamak için benzersiz bir değer kullanın
     hmac.update(kullaniciAdi + '-' + uniqueString); // "-" işaretiyle ayrılmış şekilde kullanıcı adını ve benzersiz değeri birleştirin
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
-    sendWebhookMessage(`Yeni bir ${kullaniciAdi} oluşturuldu. Oluşturulan key: ${key}`);
     return key;
 }
 
 // Discord webhook mesajı gönderme fonksiyonu
-function sendWebhookMessage(message) {
+function sendWebhookMessage(kullaniciAdi, key) {
     const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
+    let message = `${kullaniciAdi} anahtarı oluşturuldu: ${key}`;
     axios.post(webhookURL, { content: message })
         .then(response => {
             console.log('Webhook mesajı başarıyla gönderildi:', response.data);

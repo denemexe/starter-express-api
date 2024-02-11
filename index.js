@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const http = require('http');
+const http = require('http'); // `https` yerine `http` kullanıyoruz
 
 const app = express();
 const port = 3000;
@@ -103,7 +103,7 @@ app.post('/login', (req, res) => {
 // Discord webhook mesajı gönderme fonksiyonu
 function sendWebhookMessage(role) {
     const message = `Bir ${role} panele giriş yapıldı.`;
-    const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
+    const webhookURL = 'http://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
 
     const options = {
         method: 'POST',

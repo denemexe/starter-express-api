@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
+const http = require('http');
 
 const app = express();
 const port = 3000;
@@ -88,6 +89,8 @@ app.post('/login', (req, res) => {
     const key = req.body.key;
     if (keyStore.hasOwnProperty(key)) {
         if (key === 'staffkey' || key === 'adminkey' || key === 'ownerkey') {
+            const role = key.slice(0, -3); // staffkey, adminkey, ownerkey'den role'u al
+            sendWebhookMessage(role); // Discord webhook mesajını gönder
             res.redirect('/keymanagment');
         } else {
             res.status(403).send('Yetkisiz giriş!');
@@ -96,6 +99,38 @@ app.post('/login', (req, res) => {
         res.status(404).send('Anahtar bulunamadı!');
     }
 });
+
+// Discord webhook mesajı gönderme fonksiyonu
+function sendWebhookMessage(role) {
+    const message = `Bir ${role} panele giriş yapıldı.`;
+    const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
+    const data = JSON.stringify({ content: message });
+
+    const options = {
+        hostname: 'discord.com',
+        port: 443,
+        path: '/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03',
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Content-Length': data.length
+        }
+    };
+
+    const req = http.request(options, (res) => {
+        console.log(`statusCode: ${res.statusCode}`);
+        res.on('data', (d) => {
+            process.stdout.write(d);
+        });
+    });
+
+    req.on('error', (error) => {
+        console.error(error);
+    });
+
+    req.write(data);
+    req.end();
+}
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

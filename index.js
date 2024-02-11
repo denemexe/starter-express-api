@@ -53,7 +53,9 @@ app.get('/keymanagment', (req, res) => {
 // Anahtar silme endpoint'i
 app.post('/key-sil/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
-    if (keyStore.hasOwnProperty(kullaniciAdi)) {
+    if (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey') {
+        res.status(403).send('Bu anahtarı silemezsiniz!');
+    } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
         delete keyStore[kullaniciAdi];
         res.send('Anahtar başarıyla silindi.');
     } else {

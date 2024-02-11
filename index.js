@@ -21,7 +21,9 @@ app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    res.send(key);
+    const role = key.slice(0, -3); // Anahtarın rolünü belirle (staffkey, adminkey, ownerkey)
+    sendWebhookMessage(`Bir ${role} anahtar oluşturuldu: ${key}`); // Discord webhook mesajını gönder
+    res.send(`Anahtar başarıyla oluşturuldu: ${key}`);
 });
 
 // Anahtar listeleme endpoint'i
@@ -56,6 +58,7 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
     if (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey') {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
+        sendWebhookMessage(`Bir ${kullaniciAdi} anahtarı silindi: ${keyStore[kullaniciAdi]}`); // Anahtar silindiğinde log kaydı yap
         delete keyStore[kullaniciAdi];
         res.send('Anahtar başarıyla silindi.');
     } else {
@@ -73,38 +76,8 @@ function generateKey(kullaniciAdi) {
     return key;
 }
 
-// Login sayfası
-app.get('/login', (req, res) => {
-    let loginHTML = `
-        <h1>Giriş Yap</h1>
-        <form action="/login" method="post">
-            <label for="key">Anahtar:</label>
-            <input type="text" id="key" name="key" required>
-            <button type="submit">Giriş Yap</button>
-        </form>
-    `;
-    res.send(loginHTML);
-});
-
-// Giriş işlemi
-app.post('/login', (req, res) => {
-    const key = req.body.key;
-    if (keyStore.hasOwnProperty(key)) {
-        if (key === 'staffkey' || key === 'adminkey' || key === 'ownerkey') {
-            const role = key.slice(0, -3); // staffkey, adminkey, ownerkey'den role'u al
-            sendWebhookMessage(role); // Discord webhook mesajını gönder
-            res.redirect('/keymanagment');
-        } else {
-            res.status(403).send('Yetkisiz giriş!');
-        }
-    } else {
-        res.status(404).send('Anahtar bulunamadı!');
-    }
-});
-
 // Discord webhook mesajı gönderme fonksiyonu
-function sendWebhookMessage(role) {
-    let message = `Bir ${role} panele giriş yapıldı.`;
+function sendWebhookMessage(message) {
     const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
     axios.post(webhookURL, { content: message })
         .then(response => {

@@ -1,6 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
+const axios = require('axios');
 
 const app = express();
 const port = 3000;
@@ -20,14 +21,14 @@ app.post('/key-olustur', (req, res) => {
 });
 
 // Anahtar listeleme endpoint'i
-// Anahtar listeleme endpoint'i
 app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `<p>${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
+        keyListHTML += `${anahtar}, `;
     }
-    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
+    keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 
@@ -66,6 +67,39 @@ function generateKey(kullaniciAdi) {
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
     return key;
 }
+
+// Login sayfası
+app.get('/login', (req, res) => {
+    res.send(`
+        <h1>Login</h1>
+        <form action="/login-check" method="post">
+            <label for="anahtar">Anahtar:</label>
+            <input type="text" id="anahtar" name="anahtar" required>
+            <button type="submit">Giriş Yap</button>
+        </form>
+    `);
+});
+
+// Anahtar kontrolü endpoint'i
+app.post('/login-check', async (req, res) => {
+    const anahtar = req.body.anahtar;
+
+    // Burada anahtarın geçerli olup olmadığını kontrol edebilirsiniz
+    // Örnek olarak, belirlediğiniz siteden anahtarın geçerliliğini kontrol edebilirsiniz
+    try {
+        const response = await axios.get('https://sparkly-puppy-684355.netlify.app/keys.html');
+        const keysHTML = response.data;
+        
+        // Anahtarın HTML içinde geçip geçmediğini kontrol et
+        if (keysHTML.includes(anahtar)) {
+            res.send('Anahtar geçerli, giriş yapıldı.');
+        } else {
+            res.send('Anahtar geçersiz, giriş başarısız.');
+        }
+    } catch (error) {
+        res.status(500).send('Anahtar kontrolünde bir hata oluştu.');
+    }
+});
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

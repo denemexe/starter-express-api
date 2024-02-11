@@ -8,11 +8,9 @@ const port = 3000;
 // Body-parser middleware'i uygulamaya ekle
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Yetkili anahtarlar için bir veri deposu
-let authorizedKeys = [];
-
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {};
+let loginKeys = [];
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
@@ -27,43 +25,26 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
-        keyListHTML += `${kullaniciAdi}: ${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form>, `;
+        keyListHTML += `${anahtar}, `;
     }
     keyListHTML = keyListHTML.slice(0, -2); // Son virgülü kaldır
     keyListHTML += '<br><br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 
-// Yetkili anahtarları listeleme endpoint'i
-app.get('/login', (req, res) => {
-    let loginHTML = `
-        <h1>Yetkili Anahtar Girişi</h1>
-        <form action="/logincheck" method="post">
-            <label for="yetkiliAnahtar">Yetkili Anahtar:</label>
-            <input type="text" id="yetkiliAnahtar" name="yetkiliAnahtar" required>
-            <button type="submit">Giriş Yap</button>
+// Anahtar yönetimi sayfası
+app.get('/keymanagment', (req, res) => {
+    let keyManagmentHTML = `
+        <h1>Anahtar Yönetimi</h1>
+        <form action="/key-olustur" method="post">
+            <label for="kullaniciAdi">Kullanıcı Adı:</label>
+            <input type="text" id="kullaniciAdi" name="kullaniciAdi" required>
+            <button type="submit">Anahtar Oluştur</button>
         </form>
+        <br>
+        <a href="/key-list">Anahtarları Listele</a>
     `;
-    res.send(loginHTML);
-});
-
-// Yetkili anahtar kontrol endpoint'i
-app.post('/logincheck', (req, res) => {
-    const yetkiliAnahtar = req.body.yetkiliAnahtar; // req.body'yi kullanarak yetkili anahtarı al
-    if (authorizedKeys.includes(yetkiliAnahtar)) {
-        res.redirect('/keymanagment'); // Başarılı giriş durumunda yönlendirme yap
-    } else {
-        res.send('<h1 style="color:red;">Yetkisiz Erişim!</h1><p>Lütfen geçerli bir yetkili anahtar giriniz.</p>');
-    }
-});
-
-// Yeni kullanıcı için anahtar oluşturma endpoint'i
-app.get('/newlogincreate/:kullaniciAdi', (req, res) => {
-    const kullaniciAdi = req.params.kullaniciAdi;
-    const key = generateRandomKey(); // Rastgele anahtar oluştur
-    const newKey = `${kullaniciAdi}-${key}`; // Kullanıcı adı ile anahtarı birleştir
-    authorizedKeys.push(newKey); // Yetkili anahtarlar listesine ekleyelim
-    res.send(newKey); // Oluşturulan anahtarı gönderelim
+    res.send(keyManagmentHTML);
 });
 
 // Anahtar silme endpoint'i
@@ -87,20 +68,56 @@ function generateKey(kullaniciAdi) {
     return key;
 }
 
-// Rastgele anahtar oluşturma fonksiyonu
-function generateRandomKey() {
-    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let key = '';
-    for (let i = 0; i < 7; i++) {
-        key += characters.charAt(Math.floor(Math.random() * characters.length));
-    }
-    return key;
-}
-
-// Anahtarları saklama endpoint'i
-app.get('/loginkeys', (req, res) => {
-    res.json(authorizedKeys);
+// Login kısmı
+app.get('/login', (req, res) => {
+    res.send('<h1>Lütfen yetkili anahtarı giriniz:</h1><form action="/newlogincreate" method="post"><label for="loginKey">Yetkili Anahtar:</label><input type="text" id="loginKey" name="loginKey" required><button type="submit">Giriş Yap</button></form>');
 });
+
+// Yeni login oluşturma
+app.post('/newlogincreate', (req, res) => {
+    const loginKey = req.body.loginKey;
+    const kullaniciAdi = generateRandomString(7); // Rastgele kullanıcı adı oluştur
+    const key = generateKey(kullaniciAdi);
+    loginKeys.push({ kullaniciAdi, key }); // Yeni login anahtarını kaydet
+    res.redirect('/loginkeys');
+});
+
+// Login anahtarlarını listeleme
+app.get('/loginkeys', (req, res) => {
+    let loginKeysHTML = '<h1>Login Anahtarları</h1>';
+    loginKeys.forEach(loginKey => {
+        loginKeysHTML += `<p>${loginKey.kullaniciAdi}: ${loginKey.key} <form action="/loginkeys/${loginKey.kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
+    });
+    loginKeysHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    res.send(loginKeysHTML);
+});
+
+// Login anahtarı silme
+app.post('/loginkeys/:kullaniciAdi', (req, res) => {
+    const kullaniciAdi = req.params.kullaniciAdi;
+    const index = loginKeys.findIndex(loginKey => loginKey.kullaniciAdi === kullaniciAdi);
+    if (index !== -1) {
+        loginKeys.splice(index, 1);
+        res.send('Login anahtarı başarıyla silindi.');
+    } else {
+        res.status(404).send('Belirtilen kullanıcı adına ait login anahtarı bulunamadı.');
+    }
+});
+
+// Kullanıcıyı anahtar yönetimine yönlendir
+app.post('/login', (req, res) => {
+    res.redirect('/keymanagment');
+});
+
+// Rastgele kullanıcı adı oluşturma
+function generateRandomString(length) {
+    let result = '';
+    const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    for (let i = 0; i < length; i++) {
+        result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+    return result;
+}
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

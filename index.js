@@ -23,7 +23,7 @@ app.post('/key-olustur', (req, res) => {
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
 
     // Anahtar oluşturulduğunda webhook'a mesaj gönder
-    sendWebhookMessage(`Yeni Bir Key Oluşturuldu: ${key}`);
+    sendWebhookMessage(`Bir Yetkili Yeni Bir Key Oluşturdu! : ${key}`);
 
     res.send(key);
 });
@@ -61,7 +61,7 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
         // Anahtar silindiğinde webhook'a mesaj gönder
-        sendWebhookMessage(`Bir Yetkili Key Sildi Silinen Key: ${keyStore[kullaniciAdi]}`);
+        sendWebhookMessage(`Bir Yetkili Key Sildi Silinen Key! : ${keyStore[kullaniciAdi]}`);
         delete keyStore[kullaniciAdi];
         res.send('Anahtar başarıyla silindi.');
     } else {
@@ -108,7 +108,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
     const key = req.body.key;
     if (keyStore.hasOwnProperty(key)) {
-        sendWebhookMessage(`Bir Yetkili Panele Giriş Yaptı!: ${key}`);
+        sendWebhookMessage(`Bir Yetkili Panele Giriş Yaptı! : ${key}`);
         res.redirect('/keymanagment');
     } else {
         res.status(404).send('Anahtar bulunamadı!');

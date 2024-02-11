@@ -21,9 +21,9 @@ app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    
-    // Webhook mesajını gönder
-    sendWebhookMessage(kullaniciAdi, key);
+
+    // Anahtar oluşturulduğunda webhook'a mesaj gönder
+    sendWebhookMessage(`Yeni bir ${kullaniciAdi} anahtarı oluşturuldu: ${key}`);
 
     res.send(key);
 });
@@ -35,7 +35,7 @@ app.get('/key-list', (req, res) => {
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
         keyListHTML += `<p>${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
     }
-    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
+    keyListHTML += '<br><a href="/keymanagment">Anahtarları Yönet</a>';
     res.send(keyListHTML);
 });
 
@@ -60,6 +60,8 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
     if (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey') {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
+        // Anahtar silindiğinde webhook'a mesaj gönder
+        sendWebhookMessage(`Silinen anahtar: ${keyStore[kullaniciAdi]}`);
         delete keyStore[kullaniciAdi];
         res.send('Anahtar başarıyla silindi.');
     } else {
@@ -78,9 +80,8 @@ function generateKey(kullaniciAdi) {
 }
 
 // Discord webhook mesajı gönderme fonksiyonu
-function sendWebhookMessage(kullaniciAdi, key) {
+function sendWebhookMessage(message) {
     const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
-    let message = `${kullaniciAdi} anahtarı oluşturuldu: ${key}`;
     axios.post(webhookURL, { content: message })
         .then(response => {
             console.log('Webhook mesajı başarıyla gönderildi:', response.data);
@@ -89,6 +90,29 @@ function sendWebhookMessage(kullaniciAdi, key) {
             console.error('Webhook mesajı gönderilirken hata oluştu:', error);
         });
 }
+
+// Login sayfası
+app.get('/login', (req, res) => {
+    let loginHTML = `
+        <h1>Giriş Yap</h1>
+        <form action="/login" method="post">
+            <label for="key">Anahtar:</label>
+            <input type="text" id="key" name="key" required>
+            <button type="submit">Giriş Yap</button>
+        </form>
+    `;
+    res.send(loginHTML);
+});
+
+// Giriş işlemi
+app.post('/login', (req, res) => {
+    const key = req.body.key;
+    if (keyStore.hasOwnProperty(key)) {
+        res.redirect('/keymanagment');
+    } else {
+        res.status(404).send('Anahtar bulunamadı!');
+    }
+});
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

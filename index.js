@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const http = require('http');
+const https = require('https');
 
 const app = express();
 const port = 3000;
@@ -100,21 +100,24 @@ function getKeyType(key) {
 function sendDiscordMessage(userType) {
     const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03';
     const message = `${userType} sisteme giriş yaptı.`;
+    const postData = JSON.stringify({ content: message });
+
     const options = {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         }
     };
-    const req = http.request(webhookURL, options, (res) => {
-        console.log(`Discord mesajı gönderildi, statusCode: ${res.statusCode}`);
+
+    const req = https.request(webhookURL, options, (res) => {
+        console.log(`Discord Webhook'a mesaj gönderildi: ${res.statusCode}`);
     });
 
     req.on('error', (error) => {
-        console.error('Discord mesajı gönderirken hata oluştu:', error);
+        console.error('Discord Webhook mesajı gönderirken hata oluştu:', error);
     });
 
-    req.write(JSON.stringify({ content: message }));
+    req.write(postData);
     req.end();
 }
 

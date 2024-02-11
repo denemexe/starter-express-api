@@ -1,7 +1,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const http = require('http'); // `https` yerine `http` kullanıyoruz
+const axios = require('axios');
 
 const app = express();
 const port = 3000;
@@ -102,29 +102,15 @@ app.post('/login', (req, res) => {
 
 // Discord webhook mesajı gönderme fonksiyonu
 function sendWebhookMessage(role) {
-    const message = `Bir ${role} panele giriş yapıldı.`;
-    const webhookURL = 'http://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
-
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    };
-
-    const req = http.request(webhookURL, options, (res) => {
-        console.log(`statusCode: ${res.statusCode}`);
-        res.on('data', (d) => {
-            process.stdout.write(d);
+    let message = `Bir ${role} panele giriş yapıldı.`;
+    const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03'; // Discord webhook URL'i
+    axios.post(webhookURL, { content: message })
+        .then(response => {
+            console.log('Webhook mesajı başarıyla gönderildi:', response.data);
+        })
+        .catch(error => {
+            console.error('Webhook mesajı gönderilirken hata oluştu:', error);
         });
-    });
-
-    req.on('error', (error) => {
-        console.error(error);
-    });
-
-    req.write(JSON.stringify({ content: message }));
-    req.end();
 }
 
 app.listen(port, () => {

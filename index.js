@@ -108,6 +108,7 @@ app.get('/login', (req, res) => {
 app.post('/login', (req, res) => {
     const key = req.body.key;
     if (keyStore.hasOwnProperty(key)) {
+        sendWebhookMessage(`Giriş yapıldı: ${key}`);
         res.redirect('/keymanagment');
     } else {
         res.status(404).send('Anahtar bulunamadı!');

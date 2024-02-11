@@ -1,7 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const crypto = require('crypto');
-const https = require('https');
 
 const app = express();
 const port = 3000;
@@ -11,9 +10,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Örnek anahtarlar için bir veri deposu
 let keyStore = {
-    "staffkey": "staff-key-value",
-    "adminkey": "admin-key-value",
-    "ownerkey": "owner-key-value"
+    'staffkey': 'staff-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690',
+    'adminkey': 'admin-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29',
+    'ownerkey': 'owner-2eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690'
 };
 
 // Anahtar oluşturma endpoint'i
@@ -31,7 +30,7 @@ app.get('/key-list', (req, res) => {
     for (const [kullaniciAdi, anahtar] of Object.entries(keyStore)) {
         keyListHTML += `<p>${anahtar} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
     }
-    keyListHTML += '<br><a href="/keymanagment">Anahtarları Listele</a>';
+    keyListHTML += '<br><a href="/keymanagment">Anahtar Yönetimine Geri Dön</a>';
     res.send(keyListHTML);
 });
 
@@ -71,55 +70,24 @@ function generateKey(kullaniciAdi) {
     return key;
 }
 
-// Login endpoint'i
-app.post('/login', (req, res) => {
-    const key = req.body.key; // Anahtarı al
-    if (keyStore.hasOwnProperty(key)) {
-        const userType = getKeyType(key);
-        // Discord Webhook'a mesaj gönderme
-        sendDiscordMessage(userType);
-        res.redirect('/keymanagment'); // Anahtar doğruysa /keymanagment sayfasına yönlendir
-    } else {
-        res.send('Geçersiz anahtar'); // Anahtar geçersizse hata mesajı göster
-    }
+// Login sayfası
+app.get('/login', (req, res) => {
+    res.sendFile(__dirname + '/login.html');
 });
 
-// Anahtar türünü belirleme fonksiyonu
-function getKeyType(key) {
-    if (key === keyStore.staffkey) {
-        return 'Staff';
-    } else if (key === keyStore.adminkey) {
-        return 'Admin';
-    } else if (key === keyStore.ownerkey) {
-        return 'Owner';
-    }
-    return 'Unknown';
-}
-
-// Discord Webhook'a mesaj gönderme fonksiyonu
-function sendDiscordMessage(userType) {
-    const webhookURL = 'https://discord.com/api/webhooks/1205871174895140874/YOZkPBLr4F7JiaiMjmcRH2l7xyc_eKuO7E5EDYBteTT07Bx9xCEdeoZY-XG9mrlVMJ03';
-    const message = `${userType} sisteme giriş yaptı.`;
-    const postData = JSON.stringify({ content: message });
-
-    const options = {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
+// Login formundan gelen isteği işle
+app.post('/login', (req, res) => {
+    const key = req.body.key;
+    if (keyStore.hasOwnProperty(key)) {
+        if (key === 'staffkey' || key === 'adminkey' || key === 'ownerkey') {
+            res.redirect('/keymanagment');
+        } else {
+            res.send('Geçersiz anahtar.');
         }
-    };
-
-    const req = https.request(webhookURL, options, (res) => {
-        console.log(`Discord Webhook'a mesaj gönderildi: ${res.statusCode}`);
-    });
-
-    req.on('error', (error) => {
-        console.error('Discord Webhook mesajı gönderirken hata oluştu:', error);
-    });
-
-    req.write(postData);
-    req.end();
-}
+    } else {
+        res.send('Anahtar bulunamadı.');
+    }
+});
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

@@ -74,9 +74,8 @@ app.get('/login', (req, res) => {
 });
 
 // Yeni login oluşturma
-app.post('/newlogincreate', (req, res) => {
-    const loginKey = req.body.loginKey;
-    const kullaniciAdi = generateRandomString(7); // Rastgele kullanıcı adı oluştur
+app.post('/newlogincreate/:kullaniciAdi', (req, res) => {
+    const kullaniciAdi = req.params.kullaniciAdi;
     const key = generateKey(kullaniciAdi);
     loginKeys.push({ kullaniciAdi, key }); // Yeni login anahtarını kaydet
     res.redirect('/loginkeys');

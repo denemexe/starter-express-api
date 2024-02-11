@@ -1,5 +1,6 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const fs = require('fs');
 const crypto = require('crypto');
 const axios = require('axios');
 
@@ -10,20 +11,33 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Örnek anahtarlar için bir veri deposu
-let keyStore = {
-    "staffkey": "staffkey-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690",
-    "adminkey": "adminkey-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29",
-    "ownerkey": "ownerkey-6c50c5dece8c1f4b72b686ed842d79b5cf3d1812d3583eb8605ed84262b5ee1c"
-};
+let keyStore = loadKeys();
+
+// Anahtarları JSON dosyasına kaydetme
+function saveKeys() {
+    fs.writeFileSync('keys.json', JSON.stringify(keyStore, null, 2));
+}
+
+// Anahtarları JSON dosyasından yükleme
+function loadKeys() {
+    try {
+        const data = fs.readFileSync('keys.json');
+        return JSON.parse(data);
+    } catch (err) {
+        console.error('Anahtarlar yüklenirken hata:', err);
+        return {};
+    }
+}
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
+    saveKeys(); // Anahtarları kaydet
 
     // Anahtar oluşturulduğunda webhook'a mesaj gönder
-    sendWebhookMessage(`Bir Yetkili Yeni Bir Key Oluşturdu! : ${key}`);
+    sendWebhookMessage(`Yeni bir ${kullaniciAdi} anahtarı oluşturuldu: ${key}`);
 
     res.send(key);
 });
@@ -61,8 +75,9 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
         // Anahtar silindiğinde webhook'a mesaj gönder
-        sendWebhookMessage(`Bir Yetkili Key Sildi Silinen Key! : ${keyStore[kullaniciAdi]}`);
+        sendWebhookMessage(`Silinen anahtar: ${keyStore[kullaniciAdi]}`);
         delete keyStore[kullaniciAdi];
+        saveKeys(); // Anahtarları kaydet
         res.send('Anahtar başarıyla silindi.');
     } else {
         res.status(404).send('Belirtilen kullanıcı adına ait anahtar bulunamadı.');
@@ -90,30 +105,6 @@ function sendWebhookMessage(message) {
             console.error('Webhook mesajı gönderilirken hata oluştu:', error);
         });
 }
-
-// Login sayfası
-app.get('/login', (req, res) => {
-    let loginHTML = `
-        <h1>Giriş Yap</h1>
-        <form action="/login" method="post">
-            <label for="key">Anahtar:</label>
-            <input type="text" id="key" name="key" required>
-            <button type="submit">Giriş Yap</button>
-        </form>
-    `;
-    res.send(loginHTML);
-});
-
-// Giriş işlemi
-app.post('/login', (req, res) => {
-    const key = req.body.key;
-    if (keyStore.hasOwnProperty(key)) {
-        sendWebhookMessage(`Bir Yetkili Panele Giriş Yaptı! : ${key}`);
-        res.redirect('/keymanagment');
-    } else {
-        res.status(404).send('Anahtar bulunamadı!');
-    }
-});
 
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);

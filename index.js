@@ -21,9 +21,8 @@ app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
     keyStore[kullaniciAdi] = key; // Anahtarı depolayalım
-    const role = key.slice(0, -3); // Anahtarın rolünü belirle (staffkey, adminkey, ownerkey)
-    sendWebhookMessage(`Bir ${role} anahtar oluşturuldu: ${key}`); // Discord webhook mesajını gönder
-    res.send(`Anahtar başarıyla oluşturuldu: ${key}`);
+    sendWebhookMessage(`Yeni bir ${kullaniciAdi} oluşturuldu. Oluşturulan key: ${key}`);
+    res.send(key);
 });
 
 // Anahtar listeleme endpoint'i
@@ -58,8 +57,8 @@ app.post('/key-sil/:kullaniciAdi', (req, res) => {
     if (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey') {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
-        sendWebhookMessage(`Bir ${kullaniciAdi} anahtarı silindi: ${keyStore[kullaniciAdi]}`); // Anahtar silindiğinde log kaydı yap
         delete keyStore[kullaniciAdi];
+        sendWebhookMessage(`${kullaniciAdi} anahtarı silindi.`);
         res.send('Anahtar başarıyla silindi.');
     } else {
         res.status(404).send('Belirtilen kullanıcı adına ait anahtar bulunamadı.');
@@ -73,6 +72,7 @@ function generateKey(kullaniciAdi) {
     const uniqueString = Date.now().toString(); // Farklılık sağlamak için benzersiz bir değer kullanın
     hmac.update(kullaniciAdi + '-' + uniqueString); // "-" işaretiyle ayrılmış şekilde kullanıcı adını ve benzersiz değeri birleştirin
     const key = `${kullaniciAdi}-${hmac.digest('hex')}`;
+    sendWebhookMessage(`Yeni bir ${kullaniciAdi} oluşturuldu. Oluşturulan key: ${key}`);
     return key;
 }
 

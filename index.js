@@ -106,6 +106,30 @@ function sendWebhookMessage(message) {
         });
 }
 
+// Login sayfası
+app.get('/login', (req, res) => {
+    let loginHTML = `
+        <h1>Giriş Yap</h1>
+        <form action="/login" method="post">
+            <label for="key">Anahtar:</label>
+            <input type="text" id="key" name="key" required>
+            <button type="submit">Giriş Yap</button>
+        </form>
+    `;
+    res.send(loginHTML);
+});
+
+// Giriş işlemi
+app.post('/login', (req, res) => {
+    const key = req.body.key;
+    if (keyStore.hasOwnProperty(key)) {
+        sendWebhookMessage(`Giriş yapıldı: ${key}`);
+        res.redirect('/keymanagment');
+    } else {
+        res.status(404).send('Anahtar bulunamadı!');
+    }
+});
+
 app.listen(port, () => {
     console.log(`Uygulama ${port} portunda çalışıyor.`);
 });

@@ -9,18 +9,18 @@ const port = 3000;
 // Body-parser middleware'i uygulamaya ekle
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Anahtarların ve son kullanma zamanlarının saklanacağı veri deposu
+// Anahtarların saklanacağı veri deposu
 let keyStore = {
-    "staffkey": { key: "staffkey-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690", created: Date.now() },
-    "adminkey": { key: "adminkey-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29", created: Date.now() },
-    "ownerkey": { key: "ownerkey-6c50c5dece8c1f4b72b686ed842d79b5cf3d1812d3583eb8605ed84262b5ee1c", created: Date.now() }
+    "staffkey": { key: "staffkey-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690" },
+    "adminkey": { key: "adminkey-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29" },
+    "ownerkey": { key: "ownerkey-6c50c5dece8c1f4b72b686ed842d79b5cf3d1812d3583eb8605ed84262b5ee1c" }
 };
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
     const kullaniciAdi = req.body.kullaniciAdi; // req.body'yi kullanarak kullanıcı adını al
     const key = generateKey(kullaniciAdi);
-    keyStore[kullaniciAdi] = { key: key, created: Date.now() }; // Anahtarı depolayalım ve oluşturulma zamanını kaydedelim
+    keyStore[kullaniciAdi] = { key: key }; // Anahtarı depolayalım
 
     // Anahtar oluşturulduğunda webhook'a mesaj gönder
     sendWebhookMessage(`Yeni bir ${kullaniciAdi} anahtarı oluşturuldu: ${key}`);
@@ -95,17 +95,6 @@ function sendWebhookMessage(message) {
 function isSpecialKey(kullaniciAdi) {
     return (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey');
 }
-
-// Anahtarların belirli bir süre sonra otomatik olarak silinmesi
-setInterval(() => {
-    const now = Date.now();
-    for (const [kullaniciAdi, anahtarInfo] of Object.entries(keyStore)) {
-        if (!isSpecialKey(kullaniciAdi) && now - anahtarInfo.created >= 86400000) { // 24 saatlik süre (1 gün)
-            delete keyStore[kullaniciAdi];
-            sendWebhookMessage(`Anahtar otomatik olarak silindi (süre doldu): ${anahtarInfo.key}`);
-        }
-    }
-}, 3600000); // Her saatte bir kontrol et (3600000 milisaniye = 1 saat)
 
 // Login sayfası
 app.get('/login', (req, res) => {

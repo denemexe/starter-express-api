@@ -10,7 +10,11 @@ const port = 3000;
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Anahtarların ve son kullanma zamanlarının saklanacağı veri deposu
-let keyStore = {};
+let keyStore = {
+    "staffkey": "staffkey-1eaca29ae2354aa8db4ac9aa7ce300b67e1560e6774ba357a5a349ece8785690",
+    "adminkey": "adminkey-c8e5677e7f3f8bfba4bc7753d3c6f1e073b3c4933c9fff63eaae2e35e9d4ed29",
+    "ownerkey": "ownerkey-6c50c5dece8c1f4b72b686ed842d79b5cf3d1812d3583eb8605ed84262b5ee1c"
+};
 
 // Anahtar oluşturma endpoint'i
 app.post('/key-olustur', (req, res) => {
@@ -29,7 +33,7 @@ app.get('/key-list', (req, res) => {
     // Anahtar listesini HTML formatında oluşturalım
     let keyListHTML = '<h1>Anahtar Listesi</h1>';
     for (const [kullaniciAdi, anahtarInfo] of Object.entries(keyStore)) {
-        keyListHTML += `<p>${anahtarInfo.key} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit">Sil</button></form></p>`;
+        keyListHTML += `<p>${anahtarInfo.key} <form action="/key-sil/${kullaniciAdi}" method="post"><button type="submit" ${isSpecialKey(kullaniciAdi) ? 'disabled' : ''}>Sil</button></form></p>`;
     }
     keyListHTML += '<br><a href="/keymanagment">Anahtarları Yönet</a>';
     res.send(keyListHTML);
@@ -53,7 +57,7 @@ app.get('/keymanagment', (req, res) => {
 // Anahtar silme endpoint'i
 app.post('/key-sil/:kullaniciAdi', (req, res) => {
     const kullaniciAdi = req.params.kullaniciAdi;
-    if (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey') {
+    if (isSpecialKey(kullaniciAdi)) {
         res.status(403).send('Bu anahtarı silemezsiniz!');
     } else if (keyStore.hasOwnProperty(kullaniciAdi)) {
         // Anahtar silindiğinde webhook'a mesaj gönder
@@ -87,16 +91,10 @@ function sendWebhookMessage(message) {
         });
 }
 
-// Anahtarların belirli bir süre sonra otomatik olarak silinmesi
-setInterval(() => {
-    const now = Date.now();
-    for (const [kullaniciAdi, anahtarInfo] of Object.entries(keyStore)) {
-        if (now - anahtarInfo.lastUsed >= 86400000) { // 24 saatlik süre (1 gün)
-            delete keyStore[kullaniciAdi];
-            sendWebhookMessage(`Anahtar otomatik olarak silindi (süre doldu): ${anahtarInfo.key}`);
-        }
-    }
-}, 86400000); // 24 saatlik süre (1 gün)
+// Kontrol fonksiyonu: Anahtarın özel bir anahtar olup olmadığını kontrol eder
+function isSpecialKey(kullaniciAdi) {
+    return (kullaniciAdi === 'staffkey' || kullaniciAdi === 'adminkey' || kullaniciAdi === 'ownerkey');
+}
 
 // Login sayfası
 app.get('/login', (req, res) => {
